@@ -1,0 +1,35 @@
+#Vocab Quiz Format
+#
+#Lines that start with a hash mark (#) are comments
+#Lines with hash marks anywhere else treat hash marks usually
+#Empty lines are also ignored
+
+#Each part is separated by a semicolon:
+#{Word};{Part of Speech};{Definition};{Sentence with the word};{Synonyms (Comma separated words)}
+#Parts of speech: (n = noun, v = verb, a = adjective, b = adverb; d = determiner, p = perposition, e = exclamation)
+#
+#Here is an example
+
+house;noun;a building in which, usually, a family or a small group of people reside;He lived happily in a red brick house.;building,residence,home;
+
+
+#Special symbols (not to be used in phrases):
+# - # (hash mark)
+# - @ (at mark)
+# - ; (semicolon)
+# - : (colon)
+# - / (slash)
+# - \\ (backslash)
+# - * (astrix)
+# - ~ (tilde)
+# - $ (dollar sign)
+# - % (percent symbol)
+# - ^ (caret)
+# - [ (left bracket)
+# - ] (right bracket)
+# - { (left brace)
+# - } (right brace)
+# - | (pipe)
+# - , (comma) - in synonyms
+# - + (plus sign)
+# - = (equals sign)
