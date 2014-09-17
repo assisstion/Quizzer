@@ -174,7 +174,7 @@ public class QuizPanel extends JPanel implements Runnable{
 					", or " + (double)totalCorrect/(double)totalCount*100 + "%.");
 		}
 	}
-	
+
 	private boolean quiz(){
 		int id = randomExclude(quiz.getQuestionMap().size());
 		if(id < 0){
@@ -362,7 +362,7 @@ public class QuizPanel extends JPanel implements Runnable{
 			return -1;
 		}
 	}
-	
+
 	private String getAnswer(){
 		int limit = 1000000;
 		int counter = 0;
