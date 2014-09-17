@@ -10,7 +10,9 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.Set;
@@ -25,6 +27,12 @@ import com.github.assisstion.Quizzer.system.Question;
 import com.github.assisstion.Quizzer.system.Quiz;
 
 public class QuizPanel extends JPanel implements Runnable{
+
+	private static final String[] ORDINALS = {
+		"a", "b", "c", "d", "e", "f", "g", "h", "i", "j",
+		"k", "l", "m", "n", "o", "p", "q", "r", "s", "t",
+		"u", "v", "w", "x", "y", "z"
+	};
 
 	protected boolean excludeOn;
 	protected HashSet<Integer> exclude;
@@ -54,6 +62,8 @@ public class QuizPanel extends JPanel implements Runnable{
 	protected DataInputStream dis;
 
 	protected Scanner sc;
+
+	protected int qsize = 4;
 
 	/*
 	 * Modes:
@@ -215,54 +225,22 @@ public class QuizPanel extends JPanel implements Runnable{
 		for(String s : answerSet){
 			answerExclusion.add(s);
 		}
-		int i = random.nextInt(4);
-		String a = null;
-		String b = null;
-		String c = null;
-		String d = null;
-		if(i == 0){
-			a = answer;
-			b = getAnswer();
-			answerExclusion.add(b);
-			c = getAnswer();
-			answerExclusion.add(c);
-			d = getAnswer();
-			answerExclusion.clear();
+		int i = random.nextInt(qsize);
+		String[] qAns = new String[qsize];
+		for(int j = 0; j < qsize; j++){
+			if(j == i){
+				qAns[j] = answer;
+			}
+			else{
+				String ans = getAnswer();
+				qAns[j] = ans;
+				answerExclusion.add(ans);
+			}
 		}
-		else if(i == 1){
-			a = getAnswer();
-			answerExclusion.add(a);
-			b = answer;
-			c = getAnswer();
-			answerExclusion.add(c);
-			d = getAnswer();
-			answerExclusion.clear();
+		answerExclusion.clear();
+		for(int j = 0; j < qsize; j++){
+			logger.log(CustomLevel.NOMESSAGE, ordinal(j) + ". " + qAns[j]);
 		}
-		else if(i == 2){
-			a = getAnswer();
-			answerExclusion.add(a);
-			b = getAnswer();
-			answerExclusion.add(b);
-			c = answer;
-			d = getAnswer();
-			answerExclusion.clear();
-		}
-		else if(i == 3){
-			a = getAnswer();
-			answerExclusion.add(a);
-			b = getAnswer();
-			answerExclusion.add(b);
-			c = getAnswer();
-			d = answer;
-			answerExclusion.clear();
-		}
-		else{
-			logger.log(CustomLevel.NOMESSAGE, "System RNG Problem; Code: 103");
-		}
-		logger.log(CustomLevel.NOMESSAGE, "a. " + a);
-		logger.log(CustomLevel.NOMESSAGE, "b. " + b);
-		logger.log(CustomLevel.NOMESSAGE, "c. " + c);
-		logger.log(CustomLevel.NOMESSAGE, "d. " + d);
 		while(true){
 			String input = null;
 			try{
@@ -273,56 +251,37 @@ public class QuizPanel extends JPanel implements Runnable{
 				e.printStackTrace();
 			}
 			logger.log(CustomLevel.NOMESSAGE, "");
-			boolean correct;
-			if(input.length() != 1){
-				logger.log(CustomLevel.NOMESSAGE, "Invalid Input! Try again.");
-				logger.log(CustomLevel.NOMESSAGE, "");
-				continue;
-			}
-			if(input.substring(0, 1).equalsIgnoreCase("a")){
-				if(i == 0){
-					correct = true;
-				}
-				else{
-					correct = false;
-				}
-			}
-			else if(input.substring(0, 1).equalsIgnoreCase("b")){
-				if(i == 1){
-					correct = true;
-				}
-				else{
-					correct = false;
-				}
-			}
-			else if(input.substring(0, 1).equalsIgnoreCase("c")){
-				if(i == 2){
-					correct = true;
-				}
-				else{
-					correct = false;
-				}
-			}
-			else if(input.substring(0, 1).equalsIgnoreCase("d")){
-				if(i == 3){
-					correct = true;
-				}
-				else{
-					correct = false;
-				}
-			}
-			else if(input.substring(0, 1).equalsIgnoreCase("h")){
+			boolean correct = false;
+			int counterI = 0;
+			boolean broke = false;
+			if(input.equalsIgnoreCase("hint") || (qsize < 8 || qsize > 26) && input.equalsIgnoreCase("h")){
 				logger.log(CustomLevel.NOMESSAGE, "Hint: " + hint);
 				continue;
 			}
-			else if(input.substring(0, 1).equalsIgnoreCase("i")){
+			else if(input.equalsIgnoreCase("info") || (qsize < 9 || qsize > 26) && input.equalsIgnoreCase("i")){
 				printData();
 				continue;
 			}
-			else if(input.substring(0, 1).equalsIgnoreCase("q")){
+			else if(input.equalsIgnoreCase("quit") || (qsize < 17 || qsize > 26) && input.equalsIgnoreCase("q")){
 				return false;
 			}
-			else{
+			for(String s : ordinals()){
+				if(input.equalsIgnoreCase(s)){
+					if(i == counterI){
+						correct = true;
+					}
+					else{
+						correct = false;
+					}
+					broke = true;
+					break;
+				}
+				counterI++;
+				if(counterI >= qsize){
+					break;
+				}
+			}
+			if(!broke){
 				logger.log(CustomLevel.NOMESSAGE, "Invalid Input! Try again.");
 				continue;
 			}
@@ -342,6 +301,20 @@ public class QuizPanel extends JPanel implements Runnable{
 			logger.log(CustomLevel.NOMESSAGE, "");
 		}
 		return true;
+	}
+
+	private Iterable<String> ordinals(){
+		if(qsize > 26){
+			return new Ordinals(1);
+		}
+		return Arrays.asList(ORDINALS);
+	}
+
+	private String ordinal(int n){
+		if(qsize > 26){
+			return String.valueOf(n + 1);
+		}
+		return ORDINALS[n];
 	}
 
 	private int randomExclude(int total){
@@ -397,5 +370,40 @@ public class QuizPanel extends JPanel implements Runnable{
 				System.out.println("System Parsing Problem; Code: 102");
 				return "";
 		}
+	}
+
+	private class Ordinals implements Iterable<String>{
+
+		private long start = 0;
+
+		public Ordinals(long startsAt){
+			start = startsAt;
+		}
+
+		@Override
+		public Iterator<String> iterator(){
+			return new Iterator<String>(){
+
+				long count = start;
+
+				@Override
+				public boolean hasNext(){
+					//Always has next
+					return true;
+				}
+
+				@Override
+				public String next(){
+					return String.valueOf(count++);
+				}
+
+				@Override
+				public void remove(){
+					throw new UnsupportedOperationException();
+				}
+
+			};
+		}
+
 	}
 }
