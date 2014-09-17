@@ -20,8 +20,9 @@ import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import com.github.assisstion.Quizzer.custom.vocab.Quizzes;
 import com.github.assisstion.Quizzer.system.Question;
-import com.github.assisstion.Quizzer.vocab.VocabQuiz;
+import com.github.assisstion.Quizzer.system.Quiz;
 
 public class QuizPanel extends JPanel implements Runnable{
 
@@ -36,7 +37,7 @@ public class QuizPanel extends JPanel implements Runnable{
 	private boolean safeExit = false;
 	private static final long serialVersionUID = -3723376082239462955L;
 
-	protected VocabQuiz quiz;
+	protected Quiz quiz;
 	protected Random random;
 	protected int mode;
 
@@ -64,13 +65,12 @@ public class QuizPanel extends JPanel implements Runnable{
 	 * @wbp.parser.constructor
 	 */
 	public QuizPanel(int mode, String location, boolean excludeOn){
-		this(new VocabQuiz(mode), location, excludeOn);
+		this(Quizzes.getQuiz(mode), location, excludeOn);
 	}
 
-	public QuizPanel(VocabQuiz quiz, String location, boolean excludeOn){
+	public QuizPanel(Quiz quiz, String location, boolean excludeOn){
 		this.quiz = quiz;
 		random = new Random();
-		mode = quiz.getMode();
 		this.location = location;
 
 		this.excludeOn = excludeOn;

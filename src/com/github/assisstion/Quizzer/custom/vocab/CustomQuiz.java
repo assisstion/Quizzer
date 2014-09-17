@@ -23,7 +23,7 @@ public class CustomQuiz extends Quiz{
 	}
 
 	@Override
-	protected void load(String location){
+	public void load(String location){
 		BufferedReader br = null;
 		try{
 			br = new BufferedReader(new FileReader(location));
@@ -47,8 +47,8 @@ public class CustomQuiz extends Quiz{
 				}
 				Question q = format.getQuestion(Arrays.asList(strings), this);
 				if(q == null){
-					System.out.println(s);
-					System.out.println("Loading Problem; Code: 202");
+					//System.out.println(s);
+					//System.out.println("Loading Problem; Code: 202");
 					s = br.readLine();
 					continue;
 				}
@@ -84,7 +84,7 @@ public class CustomQuiz extends Quiz{
 		return format.showInfo();
 	}
 
-	private static String cleanup(String string){
+	public static String cleanup(String string){
 		String s = string;
 		while(s.length() > 0){
 			if(s.substring(s.length() - 1).equals(" ")){

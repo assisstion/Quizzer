@@ -9,9 +9,9 @@ import java.util.Map;
 public abstract class Quiz{
 	protected Map<Integer, Question> questionMap = new HashMap<Integer, Question>();
 	protected List<ArrayList<String>> answerList = new LinkedList<ArrayList<String>>();
-	
-	protected abstract void load(String location);
-	
+
+	public abstract void load(String location);
+
 
 	public Map<Integer, Question> getQuestionMap(){
 		return questionMap;
@@ -19,7 +19,7 @@ public abstract class Quiz{
 	public List<ArrayList<String>> getAnswerList(){
 		return answerList;
 	}
-	
+
 	public abstract boolean showHint();
 	public abstract boolean showInfo();
 }
