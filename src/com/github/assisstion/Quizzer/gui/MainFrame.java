@@ -17,9 +17,9 @@ import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 
 public class MainFrame extends JFrame{
-	
+
 	private static final long serialVersionUID = -1322465178993759990L;
-	
+
 	private JPanel contentPane;
 	private JButton btnDefinitionQuiz;
 	private JButton btnMultipleSynonymsQuiz;
@@ -34,7 +34,11 @@ public class MainFrame extends JFrame{
 	private JPanel panel_4;
 	private JPanel panel_5;
 	private JCheckBox chckbxFixedQuestions;
-	
+	private JPanel panel_6;
+	private JButton btnReverseSentenceQuiz;
+	private JPanel panel_7;
+	private JButton btnSentenceQuiz;
+
 	/**
 	 * Launch the application.
 	 */
@@ -52,7 +56,7 @@ public class MainFrame extends JFrame{
 			}
 		});
 	}
-	
+
 	/**
 	 * Create the frame.
 	 */
@@ -64,21 +68,21 @@ public class MainFrame extends JFrame{
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
 		contentPane.setLayout(new BorderLayout(0, 0));
-		
+
 		panel_4 = new JPanel();
 		contentPane.add(panel_4);
 		panel_4.setLayout(new BoxLayout(panel_4, BoxLayout.Y_AXIS));
-		
+
 		panel_3 = new JPanel();
 		panel_4.add(panel_3);
-		
+
 		lblWordListLocation = new JLabel("File Location:");
 		panel_3.add(lblWordListLocation);
-		
+
 		textField = new JTextField();
 		panel_3.add(textField);
 		textField.setColumns(18);
-		
+
 		btnChooseFile = new JButton("Open...");
 		btnChooseFile.addActionListener(new ActionListener() {
 			@Override
@@ -92,10 +96,10 @@ public class MainFrame extends JFrame{
 			}
 		});
 		panel_3.add(btnChooseFile);
-		
+
 		panel = new JPanel();
 		panel_4.add(panel);
-		
+
 		btnDefinitionQuiz = new JButton("Definition Quiz");
 		btnDefinitionQuiz.addActionListener(new ActionListener() {
 			@Override
@@ -104,10 +108,10 @@ public class MainFrame extends JFrame{
 			}
 		});
 		panel.add(btnDefinitionQuiz);
-		
+
 		panel_2 = new JPanel();
 		panel_4.add(panel_2);
-		
+
 		btnSingleSynonymQuiz = new JButton("Single Synonym Quiz");
 		btnSingleSynonymQuiz.addActionListener(new ActionListener() {
 			@Override
@@ -116,10 +120,10 @@ public class MainFrame extends JFrame{
 			}
 		});
 		panel_2.add(btnSingleSynonymQuiz);
-		
+
 		panel_1 = new JPanel();
 		panel_4.add(panel_1);
-		
+
 		btnMultipleSynonymsQuiz = new JButton("Multiple Synonyms Quiz");
 		btnMultipleSynonymsQuiz.addActionListener(new ActionListener() {
 			@Override
@@ -129,13 +133,37 @@ public class MainFrame extends JFrame{
 		});
 		panel_1.add(btnMultipleSynonymsQuiz);
 
+		panel_7 = new JPanel();
+		panel_4.add(panel_7);
+
+		btnSentenceQuiz = new JButton("Sentence Quiz");
+		btnSentenceQuiz.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				startQuiz(5);
+			}
+		});
+		panel_7.add(btnSentenceQuiz);
+
+		panel_6 = new JPanel();
+		panel_4.add(panel_6);
+
+		btnReverseSentenceQuiz = new JButton("Reverse Sentence Quiz");
+		btnReverseSentenceQuiz.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				startQuiz(4);
+			}
+		});
+		panel_6.add(btnReverseSentenceQuiz);
+
 		panel_5 = new JPanel();
 		panel_4.add(panel_5);
 
 		chckbxFixedQuestions = new JCheckBox("Fixed Questions");
 		panel_5.add(chckbxFixedQuestions);
 	}
-	
+
 	protected void startQuiz(int i){
 		QuizPanel quizPanel = new QuizPanel(i, textField.getText(), chckbxFixedQuestions.isSelected());
 		contentPane.remove(panel_4);
@@ -143,5 +171,5 @@ public class MainFrame extends JFrame{
 		contentPane.validate();
 		new Thread(quizPanel).start();
 	}
-	
+
 }

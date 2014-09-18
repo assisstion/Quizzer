@@ -16,6 +16,10 @@ public final class Quizzes{
 				return new CustomQuiz(new MultipleSynonymQuizFormat());
 			case 3:
 				return new CustomQuiz(new SingleSynonymQuizFormat());
+			case 4:
+				return new CustomQuiz(new ReverseSentenceFormat());
+			case 5:
+				return new CustomQuiz(new SentenceFormat());
 			default:
 				throw new IllegalArgumentException("Invalid quiz number");
 		}
