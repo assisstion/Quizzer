@@ -5,13 +5,13 @@
 #Empty lines are also ignored
 
 #Each part is separated by a semicolon:
-#{Word};{Part of Speech};{Definition};{Sentence with the word};{Synonyms (Comma separated words)}
+#{Word};{Part of Speech};{Definition};{Sentence with the word};{Synonyms (Comma separated words)};
 #Parts of speech: (n = noun, v = verb, a = adjective, b = adverb; d = determiner, p = perposition, e = exclamation)
 #
 #Here is an example
 
 house;noun;a building in which, usually, a family or a small group of people reside;He lived happily in a red brick house.;building,residence,home;
-
+eat;verb;consume food by chewing and swallowing in the mouth;People who live there eat dinner each day at sunset.;consume,ingest,devour;
 
 #Special symbols (not to be used in phrases):
 # - # (hash mark)
