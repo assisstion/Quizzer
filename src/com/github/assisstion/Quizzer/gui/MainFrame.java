@@ -38,6 +38,7 @@ public class MainFrame extends JFrame{
 	private JButton btnReverseSentenceQuiz;
 	private JPanel panel_7;
 	private JButton btnSentenceQuiz;
+	private QuizPanel quizPanel;
 
 	/**
 	 * Launch the application.
@@ -165,11 +166,25 @@ public class MainFrame extends JFrame{
 	}
 
 	protected void startQuiz(int i){
-		QuizPanel quizPanel = new QuizPanel(i, textField.getText(), chckbxFixedQuestions.isSelected());
+		quizPanel = new QuizPanel(this, i, textField.getText(), chckbxFixedQuestions.isSelected());
 		contentPane.remove(panel_4);
 		contentPane.add(quizPanel);
 		contentPane.validate();
 		new Thread(quizPanel).start();
+	}
+
+	public void returnToMenu(){
+		EventQueue.invokeLater(new Runnable(){
+
+			@Override
+			public void run(){
+				contentPane.remove(quizPanel);
+				contentPane.add(panel_4);
+				contentPane.validate();
+				contentPane.repaint();
+			}
+
+		});
 	}
 
 }

@@ -65,20 +65,22 @@ public class QuizPanel extends JPanel implements Runnable{
 
 	protected int qsize = 4;
 
+	protected MainFrame mainFrame;
+
+	protected boolean silentlyExit = true;
+
 	/*
 	 * Modes:
 	 *  1 = Definition
 	 *  2 = Multi-Synonym
 	 *  3 = Single-Synonym
 	 */
-	/**
-	 * @wbp.parser.constructor
-	 */
-	public QuizPanel(int mode, String location, boolean excludeOn){
-		this(Quizzes.getQuiz(mode), location, excludeOn);
+	public QuizPanel(MainFrame mainFrame, int mode, String location, boolean excludeOn){
+		this(mainFrame, Quizzes.getQuiz(mode), location, excludeOn);
 	}
 
-	public QuizPanel(Quiz quiz, String location, boolean excludeOn){
+	public QuizPanel(MainFrame mainFrame, Quiz quiz, String location, boolean excludeOn){
+		this.mainFrame = mainFrame;
 		this.quiz = quiz;
 		random = new Random();
 		this.location = location;
@@ -144,6 +146,8 @@ public class QuizPanel extends JPanel implements Runnable{
 	@Override
 	public void run(){
 		try{
+			safeExit = false;
+			silentlyExit = false;
 			logger.log(CustomLevel.NOMESSAGE, "Welcome to the Vocab Quiz!");
 			quiz.load(location);
 			logger.log(CustomLevel.NOMESSAGE, "Type in your answer in the console (and press Enter), or type q to quit.");
@@ -151,23 +155,55 @@ public class QuizPanel extends JPanel implements Runnable{
 			boolean n = true;
 			while(n == true){
 				n = quiz();
+				if(silentlyExit){
+					return;
+				}
 			}
 			printData();
 			safeExit = true;
 			logger.log(CustomLevel.NOMESSAGE, "Thank you for playing!");
 		}
 		catch(Exception e){
-			logger.log(CustomLevel.NOMESSAGE, "Uncaught Exception; Code: 000");
-			e.printStackTrace();
+			logger.log(CustomLevel.NOMESSAGE, "Uncaught " + e.getClass() +
+					": " + e.getMessage() + "; Code: 000");
+			logger.log(CustomLevel.NOMESSAGE, "Type \"quit\" to exit");
+			logger.log(CustomLevel.NOMESSAGE, "Type \"menu\" to return to menu");
+			String input;
+			while(true){
+				try{
+					input = dis.readUTF();
+				}
+				catch(IOException e1){
+					return;
+				}
+				e.printStackTrace();
+				if(input.equalsIgnoreCase("quit") || (qsize < 17 || qsize > 26) && input.equalsIgnoreCase("q")){
+					safeExit = true;
+					silentlyExit = false;
+					return;
+				}
+				else if(input.equalsIgnoreCase("menu") || (qsize < 13 || qsize > 26) && input.equalsIgnoreCase("m")){
+					silentlyExit = true;
+					return;
+				}
+				else{
+					logger.log(CustomLevel.NOMESSAGE, "Invalid Input! Try again.");
+				}
+			}
 		}
 		finally{
-			if(!safeExit){
-				logger.log(CustomLevel.NOMESSAGE, "");
-				logger.log(CustomLevel.NOMESSAGE, "");
-				logger.log(CustomLevel.NOMESSAGE, "Program terminated.");
-				System.exit(1);
+			if(!silentlyExit){
+				if(!safeExit){
+					logger.log(CustomLevel.NOMESSAGE, "");
+					logger.log(CustomLevel.NOMESSAGE, "");
+					logger.log(CustomLevel.NOMESSAGE, "Program terminated.");
+					System.exit(1);
+				}
+				System.exit(0);
 			}
-			System.exit(0);
+			else{
+				mainFrame.returnToMenu();
+			}
 		}
 	}
 
@@ -188,7 +224,7 @@ public class QuizPanel extends JPanel implements Runnable{
 	private boolean quiz(){
 		int id = randomExclude(quiz.getQuestionMap().size());
 		if(id < 0){
-			return false;
+			throw new IllegalArgumentException("Quiz size non-positive");
 		}
 		Question question = quiz.getQuestionMap().get(id);
 		int limit = 1000000;
@@ -264,6 +300,10 @@ public class QuizPanel extends JPanel implements Runnable{
 			}
 			else if(input.equalsIgnoreCase("quit") || (qsize < 17 || qsize > 26) && input.equalsIgnoreCase("q")){
 				return false;
+			}
+			else if(input.equalsIgnoreCase("menu") || (qsize < 13 || qsize > 26) && input.equalsIgnoreCase("m")){
+				silentlyExit = true;
+				return true;
 			}
 			for(String s : ordinals()){
 				if(input.equalsIgnoreCase(s)){
