@@ -26,3 +26,6 @@ data/*
 # Mac Files #
 *.DS_Store
 /bin/
+
+#Logs#
+logs/*

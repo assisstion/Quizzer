@@ -69,6 +69,8 @@ public class QuizPanel extends JPanel implements Runnable{
 
 	protected boolean silentlyExit = true;
 
+	protected boolean complete;
+
 	/*
 	 * Modes:
 	 *  1 = Definition
@@ -90,7 +92,7 @@ public class QuizPanel extends JPanel implements Runnable{
 			exclude = new HashSet<Integer>();
 		}
 
-		logger = Logger.getLogger("main");
+		logger = Logger.getLogger("quiz-" + hashCode());
 		setLayout(new BorderLayout(0, 0));
 		loggerPane = new LoggerPane(logger, false);
 		add(loggerPane);
@@ -146,6 +148,7 @@ public class QuizPanel extends JPanel implements Runnable{
 	@Override
 	public void run(){
 		try{
+			complete = false;
 			safeExit = false;
 			silentlyExit = false;
 			logger.log(CustomLevel.NOMESSAGE, "Welcome to the Vocab Quiz!");
@@ -172,6 +175,7 @@ public class QuizPanel extends JPanel implements Runnable{
 			while(true){
 				try{
 					input = dis.readUTF();
+					logger.log(CustomLevel.NOMESSAGE, "(" + input + ")");
 				}
 				catch(IOException e1){
 					return;
@@ -192,14 +196,17 @@ public class QuizPanel extends JPanel implements Runnable{
 			}
 		}
 		finally{
+			complete = true;
 			if(!silentlyExit){
 				if(!safeExit){
 					logger.log(CustomLevel.NOMESSAGE, "");
 					logger.log(CustomLevel.NOMESSAGE, "");
 					logger.log(CustomLevel.NOMESSAGE, "Program terminated.");
-					System.exit(1);
+					mainFrame.setVisible(false);
+					mainFrame.dispose();
 				}
-				System.exit(0);
+				mainFrame.setVisible(false);
+				mainFrame.dispose();
 			}
 			else{
 				mainFrame.returnToMenu();
@@ -281,6 +288,7 @@ public class QuizPanel extends JPanel implements Runnable{
 			String input = null;
 			try{
 				input = dis.readUTF();
+				logger.log(CustomLevel.NOMESSAGE, "(" + input + ")");
 			}
 			catch(IOException e){
 				// TODO Auto-generated catch block
@@ -304,6 +312,10 @@ public class QuizPanel extends JPanel implements Runnable{
 			else if(input.equalsIgnoreCase("menu") || (qsize < 13 || qsize > 26) && input.equalsIgnoreCase("m")){
 				silentlyExit = true;
 				return true;
+			}
+			else if(input.equalsIgnoreCase("help")){
+				printHelp();
+				continue;
 			}
 			for(String s : ordinals()){
 				if(input.equalsIgnoreCase(s)){
@@ -341,6 +353,15 @@ public class QuizPanel extends JPanel implements Runnable{
 			logger.log(CustomLevel.NOMESSAGE, "");
 		}
 		return true;
+	}
+
+	private void printHelp(){
+		logger.log(CustomLevel.NOMESSAGE, "Available Commands:");
+		logger.log(CustomLevel.NOMESSAGE, "help - Display available commands");
+		logger.log(CustomLevel.NOMESSAGE, "hint - Gets a hint");
+		logger.log(CustomLevel.NOMESSAGE, "info - Gets current information");
+		logger.log(CustomLevel.NOMESSAGE, "quit - Shuts down program");
+		logger.log(CustomLevel.NOMESSAGE, "menu - Return to main menu");
 	}
 
 	private Iterable<String> ordinals(){
@@ -445,5 +466,9 @@ public class QuizPanel extends JPanel implements Runnable{
 			};
 		}
 
+	}
+
+	public boolean isComplete(){
+		return complete;
 	}
 }

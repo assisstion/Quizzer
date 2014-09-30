@@ -4,7 +4,16 @@ import java.awt.BorderLayout;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.Closeable;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Calendar;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.logging.Logger;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -39,6 +48,9 @@ public class MainFrame extends JFrame{
 	private JPanel panel_7;
 	private JButton btnSentenceQuiz;
 	private QuizPanel quizPanel;
+	private JCheckBox chckbxLogOutput;
+
+	private List<Closeable> leakableResources = new CopyOnWriteArrayList<Closeable>();
 
 	/**
 	 * Launch the application.
@@ -63,7 +75,8 @@ public class MainFrame extends JFrame{
 	 */
 	public MainFrame(){
 		setTitle("Vocab Quizzer");
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		addWindowListener(new ShutdownWindowListener());
 		setBounds(100, 100, 450, 300);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -163,14 +176,17 @@ public class MainFrame extends JFrame{
 
 		chckbxFixedQuestions = new JCheckBox("Fixed Questions");
 		panel_5.add(chckbxFixedQuestions);
+
+		chckbxLogOutput = new JCheckBox("Log Output");
+		panel_5.add(chckbxLogOutput);
 	}
 
 	protected void startQuiz(int i){
 		quizPanel = new QuizPanel(this, i, textField.getText(), chckbxFixedQuestions.isSelected());
 		contentPane.remove(panel_4);
 		contentPane.add(quizPanel);
-		contentPane.validate();
-		new Thread(quizPanel).start();
+		new Thread(new QuizStarter()).start();
+
 	}
 
 	public void returnToMenu(){
@@ -187,4 +203,72 @@ public class MainFrame extends JFrame{
 		});
 	}
 
+	protected class QuizStarter implements Runnable{
+
+		@Override
+		public void run(){
+			FileOutputConsumer fos = null;
+			try{
+				if(chckbxLogOutput.isSelected()){
+					Calendar c = Calendar.getInstance();
+					String timeStamp = String.format("%1$tY-%1$tm-%1td %1$tH:%1$tM:%1$tS", c);
+					File dir = new File("logs");
+					dir.mkdir();
+					File outputFile = new File("logs" + File.separator + "quiz-" + timeStamp + ".txt");
+					outputFile.createNewFile();
+					fos = new FileOutputConsumer(new FileWriter(outputFile));
+					leakableResources.add(fos);
+					Logger log = Logger.getLogger("quiz-" + quizPanel.hashCode());
+					log.addHandler(new LogHandler(fos));
+				}
+				contentPane.validate();
+				Thread qt = new Thread(quizPanel);
+				synchronized(qt){
+					qt.start();
+					while(!quizPanel.isComplete()){
+						try{
+							qt.join();
+						}
+						catch(InterruptedException e){
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+				}
+			}
+			catch(IOException e){
+				e.printStackTrace();
+			}
+			finally{
+				if(fos != null){
+					try{
+						fos.close();
+						leakableResources.remove(fos);
+					}
+					catch(IOException e){
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+	}
+
+	public class ShutdownWindowListener extends WindowAdapter{
+
+		@Override
+		public void windowClosed(WindowEvent arg0){
+			for(Closeable closeable : leakableResources){
+				try{
+					closeable.close();
+				}
+				catch(IOException e){
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			System.exit(0);
+		}
+
+	}
 }

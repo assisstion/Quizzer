@@ -6,12 +6,12 @@ import java.util.logging.LogRecord;
 
 public class LogHandler extends Handler{
 
-	protected LoggerPane gui;
-	
-	public LogHandler(LoggerPane gui){
-		this.gui = gui;
+	protected StringConsumer sc;
+
+	public LogHandler(StringConsumer sc){
+		this.sc = sc;
 	}
-	
+
 	@Override
 	public void close() throws SecurityException{
 		// Unimplemented
@@ -28,10 +28,10 @@ public class LogHandler extends Handler{
 		Calendar c = Calendar.getInstance();
 		String timeStamp = String.format("%1$tY-%1$tm-%1td %1$tH:%1$tM:%1$tS", c);
 		if(!record.getLevel().getName().equals("NOMESSAGE")){
-			gui.worker.push(timeStamp + " - [" + record.getLevel().getName() + "] " + record.getMessage());
+			sc.accept(timeStamp + " - [" + record.getLevel().getName() + "] " + record.getMessage());
 		}
 		else{
-			gui.worker.push(record.getMessage());
+			sc.accept(record.getMessage());
 		}
 	}
 }
