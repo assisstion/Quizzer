@@ -71,6 +71,8 @@ public class QuizPanel extends JPanel implements Runnable{
 
 	protected boolean complete;
 
+	private boolean finished;
+
 	/*
 	 * Modes:
 	 *  1 = Definition
@@ -148,6 +150,7 @@ public class QuizPanel extends JPanel implements Runnable{
 	@Override
 	public void run(){
 		try{
+			finished = false;
 			complete = false;
 			safeExit = false;
 			silentlyExit = false;
@@ -158,6 +161,11 @@ public class QuizPanel extends JPanel implements Runnable{
 			boolean n = true;
 			while(n == true){
 				n = quiz();
+				if(finished){
+					printData();
+					exitPrompt();
+					return;
+				}
 				if(silentlyExit){
 					return;
 				}
@@ -169,31 +177,9 @@ public class QuizPanel extends JPanel implements Runnable{
 		catch(Exception e){
 			logger.log(CustomLevel.NOMESSAGE, "Uncaught " + e.getClass() +
 					": " + e.getMessage() + "; Code: 000");
-			logger.log(CustomLevel.NOMESSAGE, "Type \"quit\" to exit");
-			logger.log(CustomLevel.NOMESSAGE, "Type \"menu\" to return to menu");
-			String input;
-			while(true){
-				try{
-					input = dis.readUTF();
-					logger.log(CustomLevel.NOMESSAGE, "(" + input + ")");
-				}
-				catch(IOException e1){
-					return;
-				}
-				e.printStackTrace();
-				if(input.equalsIgnoreCase("quit") || (qsize < 17 || qsize > 26) && input.equalsIgnoreCase("q")){
-					safeExit = true;
-					silentlyExit = false;
-					return;
-				}
-				else if(input.equalsIgnoreCase("menu") || (qsize < 13 || qsize > 26) && input.equalsIgnoreCase("m")){
-					silentlyExit = true;
-					return;
-				}
-				else{
-					logger.log(CustomLevel.NOMESSAGE, "Invalid Input! Try again.");
-				}
-			}
+			e.printStackTrace();
+			exitPrompt();
+			return;
 		}
 		finally{
 			complete = true;
@@ -214,6 +200,33 @@ public class QuizPanel extends JPanel implements Runnable{
 		}
 	}
 
+	private void exitPrompt(){
+		logger.log(CustomLevel.NOMESSAGE, "Type \"quit\" to exit");
+		logger.log(CustomLevel.NOMESSAGE, "Type \"menu\" to return to menu");
+		String input;
+		while(true){
+			try{
+				input = dis.readUTF();
+				logger.log(CustomLevel.NOMESSAGE, "(" + input + ")");
+			}
+			catch(IOException e1){
+				break;
+			}
+			if(input.equalsIgnoreCase("quit") || (qsize < 17 || qsize > 26) && input.equalsIgnoreCase("q")){
+				safeExit = true;
+				silentlyExit = false;
+				break;
+			}
+			else if(input.equalsIgnoreCase("menu") || (qsize < 13 || qsize > 26) && input.equalsIgnoreCase("m")){
+				silentlyExit = true;
+				break;
+			}
+			else{
+				logger.log(CustomLevel.NOMESSAGE, "Invalid Input! Try again.");
+			}
+		}
+	}
+
 	private void printData(){
 		if(incorrect.size() > 0){
 			logger.log(CustomLevel.NOMESSAGE, "Incorrect Words:");
@@ -230,6 +243,9 @@ public class QuizPanel extends JPanel implements Runnable{
 
 	private boolean quiz(){
 		int id = randomExclude(quiz.getQuestionMap().size());
+		if(finished){
+			return false;
+		}
 		if(id < 0){
 			throw new IllegalArgumentException("Quiz size non-positive");
 		}
@@ -384,6 +400,7 @@ public class QuizPanel extends JPanel implements Runnable{
 		}
 		else{
 			if(exclude.size() >= total){
+				finished = true;
 				return -1;
 			}
 			while(exclude.size() < total){
