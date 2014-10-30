@@ -314,6 +314,9 @@ public class QuizPanel extends JPanel implements Runnable{
 			boolean correct = false;
 			int counterI = 0;
 			boolean broke = false;
+			if(input == null){
+				return false;
+			}
 			if(input.equalsIgnoreCase("hint") || (qsize < 8 || qsize > 26) && input.equalsIgnoreCase("h")){
 				logger.log(CustomLevel.NOMESSAGE, "Hint: " + hint);
 				continue;
