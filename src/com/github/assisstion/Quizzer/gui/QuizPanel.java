@@ -39,6 +39,8 @@ public class QuizPanel extends JPanel implements Runnable{
 	protected boolean excludeOn;
 	protected HashSet<Integer> exclude;
 
+	protected Map<Integer, Pair<Integer, Integer>> scores
+	= new HashMap<Integer, Pair<Integer, Integer>>();
 
 	protected Set<String> incorrect = new HashSet<String>();
 	protected Set<String> answerExclusion = new HashSet<String>();
@@ -420,9 +422,6 @@ public class QuizPanel extends JPanel implements Runnable{
 		}
 		return ORDINALS[n];
 	}
-
-	protected Map<Integer, Pair<Integer, Integer>> scores
-	= new HashMap<Integer, Pair<Integer, Integer>>();
 
 	private int randomExclude(int total){
 		if(!excludeOn){
