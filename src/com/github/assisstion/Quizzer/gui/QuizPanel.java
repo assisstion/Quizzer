@@ -11,8 +11,10 @@ import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.Set;
@@ -71,6 +73,8 @@ public class QuizPanel extends JPanel implements Runnable{
 
 	protected boolean complete;
 
+	protected boolean balance;
+
 	private boolean finished;
 
 	/*
@@ -79,11 +83,11 @@ public class QuizPanel extends JPanel implements Runnable{
 	 *  2 = Multi-Synonym
 	 *  3 = Single-Synonym
 	 */
-	public QuizPanel(MainFrame mainFrame, int mode, String location, boolean excludeOn){
-		this(mainFrame, Quizzes.getQuiz(mode), location, excludeOn);
+	public QuizPanel(MainFrame mainFrame, int mode, String location, boolean excludeOn, boolean balance){
+		this(mainFrame, Quizzes.getQuiz(mode), location, excludeOn, balance);
 	}
 
-	public QuizPanel(MainFrame mainFrame, Quiz quiz, String location, boolean excludeOn){
+	public QuizPanel(MainFrame mainFrame, Quiz quiz, String location, boolean excludeOn, boolean balance){
 		this.mainFrame = mainFrame;
 		this.quiz = quiz;
 		random = new Random();
@@ -93,6 +97,8 @@ public class QuizPanel extends JPanel implements Runnable{
 		if(excludeOn){
 			exclude = new HashSet<Integer>();
 		}
+
+		this.balance = balance;
 
 		logger = Logger.getLogger("quiz-" + hashCode());
 		setLayout(new BorderLayout(0, 0));
@@ -358,11 +364,29 @@ public class QuizPanel extends JPanel implements Runnable{
 			}
 			if(correct){
 				logger.log(CustomLevel.NOMESSAGE, "Correct Answer! Score: " + ++totalCorrect + "/" + ++totalCount);
+				if(scores.containsKey(id)){
+					Pair<Integer, Integer> pair = scores.get(id);
+					Pair<Integer, Integer> pair2 = new Pair<Integer, Integer>(
+							pair.getValueOne() + 1, pair.getValueTwo() + 1);
+					scores.put(id, pair2);
+				}
+				else{
+					scores.put(id, new Pair<Integer, Integer>(1, 1));
+				}
 			}
 			else{
 				logger.log(CustomLevel.NOMESSAGE, "Incorrect Answer; the correct answer is " + toLetter(i) +
 						"! Score: " + totalCorrect + "/" + ++totalCount);
 				incorrect.add(shortForm);
+				if(scores.containsKey(id)){
+					Pair<Integer, Integer> pair = scores.get(id);
+					Pair<Integer, Integer> pair2 = new Pair<Integer, Integer>(
+							pair.getValueOne(), pair.getValueTwo() + 1);
+					scores.put(id, pair2);
+				}
+				else{
+					scores.put(id, new Pair<Integer, Integer>(0, 1));
+				}
 			}
 			logger.log(CustomLevel.NOMESSAGE, "");
 			break;
@@ -397,9 +421,47 @@ public class QuizPanel extends JPanel implements Runnable{
 		return ORDINALS[n];
 	}
 
+	protected Map<Integer, Pair<Integer, Integer>> scores
+	= new HashMap<Integer, Pair<Integer, Integer>>();
+
 	private int randomExclude(int total){
 		if(!excludeOn){
-			return random.nextInt(total);
+			if(balance){
+				//max miss 1
+				final double miss = 0.9;
+				//min ratio 0
+				final double ratio = 2.0;
+				double totalX = 0;
+				final double fix = total / (total - ratio);
+				for(int i = 0; i < total; i++){
+					if(scores.containsKey(i)){
+						Pair<Integer, Integer> pint = scores.get(i);
+						totalX += fix - (double)pint.getValueOne() /
+								pint.getValueTwo();
+					}
+					else{
+						totalX += fix - miss;
+					}
+				}
+				double val = random.nextDouble() * totalX;
+				for(int i = 0; i < total; i++){
+					if(scores.containsKey(i)){
+						Pair<Integer, Integer> pint = scores.get(i);
+						val -= fix - (double)pint.getValueOne() /
+								pint.getValueTwo();
+					}
+					else{
+						val -= fix - miss;
+					}
+					if(val < 0){
+						return i;
+					}
+				}
+				throw new IllegalStateException(String.valueOf(val));
+			}
+			else{
+				return random.nextInt(total);
+			}
 		}
 		else{
 			if(exclude.size() >= total){
@@ -426,6 +488,7 @@ public class QuizPanel extends JPanel implements Runnable{
 			cont = false;
 			if(++counter >= limit){
 				logger.log(CustomLevel.NOMESSAGE, "Answer Parsing Problem; Code: 101");
+				break;
 			}
 			s = quiz.getAnswerList().get(mode).get(random.nextInt(quiz.getAnswerList().get(mode).size()));
 			for(String nto : answerExclusion){

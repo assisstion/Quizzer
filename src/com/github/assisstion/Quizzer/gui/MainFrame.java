@@ -51,6 +51,7 @@ public class MainFrame extends JFrame{
 	private JCheckBox chckbxLogOutput;
 
 	private List<Closeable> leakableResources = new CopyOnWriteArrayList<Closeable>();
+	private JCheckBox chckbxBalance;
 
 	/**
 	 * Launch the application.
@@ -179,10 +180,13 @@ public class MainFrame extends JFrame{
 
 		chckbxLogOutput = new JCheckBox("Log Output");
 		panel_5.add(chckbxLogOutput);
+
+		chckbxBalance = new JCheckBox("Balance");
+		panel_5.add(chckbxBalance);
 	}
 
 	protected void startQuiz(int i){
-		quizPanel = new QuizPanel(this, i, textField.getText(), chckbxFixedQuestions.isSelected());
+		quizPanel = new QuizPanel(this, i, textField.getText(), chckbxFixedQuestions.isSelected(), chckbxBalance.isSelected());
 		contentPane.remove(panel_4);
 		contentPane.add(quizPanel);
 		new Thread(new QuizStarter()).start();
