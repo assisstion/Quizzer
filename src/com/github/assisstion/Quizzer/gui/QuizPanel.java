@@ -1,6 +1,7 @@
 package com.github.assisstion.Quizzer.gui;
 
 import java.awt.BorderLayout;
+import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
@@ -14,15 +15,27 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.Logger;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.JTextField;
+import javax.swing.SwingConstants;
+import javax.swing.SwingWorker;
 
 import com.github.assisstion.Quizzer.custom.vocab.Quizzes;
 import com.github.assisstion.Quizzer.system.Question;
@@ -77,7 +90,12 @@ public class QuizPanel extends JPanel implements Runnable{
 
 	protected boolean balance;
 
-	private boolean finished;
+	protected String timed;
+	protected long timeAllowed = 5000;
+
+	protected boolean finished;
+	protected JProgressBar progressBar;
+	protected final int progressMax = 100;
 
 	/*
 	 * Modes:
@@ -85,23 +103,17 @@ public class QuizPanel extends JPanel implements Runnable{
 	 *  2 = Multi-Synonym
 	 *  3 = Single-Synonym
 	 */
-	public QuizPanel(MainFrame mainFrame, int mode, String location, boolean excludeOn, boolean balance){
-		this(mainFrame, Quizzes.getQuiz(mode), location, excludeOn, balance);
+	public QuizPanel(MainFrame mainFrame, int mode, String location,
+			boolean excludeOn, boolean balance, String timed){
+		this(mainFrame, Quizzes.getQuiz(mode), location, excludeOn, balance, timed);
 	}
 
-	public QuizPanel(MainFrame mainFrame, Quiz quiz, String location, boolean excludeOn, boolean balance){
-		this.mainFrame = mainFrame;
-		this.quiz = quiz;
-		random = new Random();
-		this.location = location;
+	public QuizPanel(){
+		this("Regular");
+	}
 
-		this.excludeOn = excludeOn;
-		if(excludeOn){
-			exclude = new HashSet<Integer>();
-		}
-
-		this.balance = balance;
-
+	public QuizPanel(String timed){
+		this.timed = timed.toLowerCase();
 		logger = Logger.getLogger("quiz-" + hashCode());
 		setLayout(new BorderLayout(0, 0));
 		loggerPane = new LoggerPane(logger, false);
@@ -124,12 +136,18 @@ public class QuizPanel extends JPanel implements Runnable{
 					textField.setText("");
 				}
 				catch(IOException e){
-					// TODO Auto-generated catch block
+					logger.log(CustomLevel.NOMESSAGE, "Uncaught " + e.getClass() +
+							": " + e.getMessage() + "; Code: 000");
 					e.printStackTrace();
 				}
 			}
 		});
 		panel.add(btnGo);
+
+		if(!timed.equals("none")){
+			progressBar = new JProgressBar(SwingConstants.VERTICAL, 0, progressMax);
+			loggerPane.add(progressBar, BorderLayout.WEST);
+		}
 
 		textField.addKeyListener(new KeyAdapter(){
 			@Override
@@ -145,7 +163,8 @@ public class QuizPanel extends JPanel implements Runnable{
 			pis = new PipedInputStream(pos);
 		}
 		catch(IOException e){
-			// TODO Auto-generated catch block
+			logger.log(CustomLevel.NOMESSAGE, "Uncaught " + e.getClass() +
+					": " + e.getMessage() + "; Code: 000");
 			e.printStackTrace();
 		}
 
@@ -153,6 +172,21 @@ public class QuizPanel extends JPanel implements Runnable{
 		dis = new DataInputStream(pis);
 
 		sc = new Scanner(dis);
+	}
+
+	public QuizPanel(MainFrame mainFrame, Quiz quiz, String location, boolean excludeOn, boolean balance, String timed){
+		this(timed);
+		this.mainFrame = mainFrame;
+		this.quiz = quiz;
+		random = new Random();
+		this.location = location;
+
+		this.excludeOn = excludeOn;
+		if(excludeOn){
+			exclude = new HashSet<Integer>();
+		}
+
+		this.balance = balance;
 	}
 
 	@Override
@@ -311,7 +345,93 @@ public class QuizPanel extends JPanel implements Runnable{
 		while(true){
 			String input = null;
 			try{
-				input = dis.readUTF();
+				if(!timed.equals("none")){
+					Callable<String> callable = new Callable<String>(){
+						@Override
+						public String call() throws IOException{
+							return dis.readUTF();
+						}
+					};
+					ExecutorService es = Executors.newSingleThreadExecutor();
+					Future<String> fs = es.submit(callable);
+					ProgressBarUpdater pbu = null;
+					try{
+						long value0;
+						if(totalCount == 0){
+							value0 = 1;
+						}
+						else{
+							value0 = totalCorrect * totalCorrect / totalCount;
+						}
+						int val;
+						if(timed.equals("fast")){
+							val = 3;
+						}
+						else if(timed.equals("regular")){
+							val = 5;
+						}
+						else if(timed.equals("slow")){
+							val = 8;
+						}
+						else{
+							throw new IllegalArgumentException();
+						}
+						if(balance){
+
+							timeAllowed = (long)(1000 * (Math.pow(1.5, -value0/val + val) + val));
+
+						}
+						else{
+							timeAllowed = 400 * val * val;
+						}
+						pbu = new ProgressBarUpdater(
+								System.currentTimeMillis(), timeAllowed);
+						pbu.execute();
+						input = fs.get(timeAllowed, TimeUnit.MILLISECONDS);
+					}
+					catch(TimeoutException e0){
+						Callable<String> getTextFieldString = new Callable<String>(){
+							@Override
+							public String call(){
+								return textField.getText();
+							}
+						};
+						FutureTask<String> task
+						= new FutureTask<String>(getTextFieldString);
+						EventQueue.invokeLater(task);
+						//Arbitrary timeout of 1s to get text field
+						try{
+							input = task.get(1000, TimeUnit.MILLISECONDS);
+						}
+						catch(InterruptedException e){
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						catch(ExecutionException e){
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						catch(TimeoutException e){
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+					catch(InterruptedException e){
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					catch(ExecutionException e){
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					es.shutdown();
+					if(pbu != null){
+						pbu.cancel(true);
+					}
+				}
+				else{
+					input = dis.readUTF();
+				}
 				logger.log(CustomLevel.NOMESSAGE, "(" + input + ")");
 			}
 			catch(IOException e){
@@ -361,8 +481,13 @@ public class QuizPanel extends JPanel implements Runnable{
 				}
 			}
 			if(!broke){
-				logger.log(CustomLevel.NOMESSAGE, "Invalid Input! Try again.");
-				continue;
+				if(timed.equals("none")){
+					logger.log(CustomLevel.NOMESSAGE, "Invalid Input! Try again.");
+					continue;
+				}
+				else{
+					correct = false;
+				}
 			}
 			if(correct){
 				logger.log(CustomLevel.NOMESSAGE, "Correct Answer! Score: " + ++totalCorrect + "/" + ++totalCount);
@@ -553,4 +678,37 @@ public class QuizPanel extends JPanel implements Runnable{
 	public boolean isComplete(){
 		return complete;
 	}
+
+	protected class ProgressBarUpdater extends SwingWorker<Object, Integer>{
+
+		protected long initTime;
+		protected long length;
+
+		public ProgressBarUpdater(long initTime, long length){
+			this.initTime = initTime;
+			this.length = length;
+			progressBar.setStringPainted(true);
+		}
+
+		@Override
+		protected Object doInBackground() throws Exception{
+			long current = System.currentTimeMillis();
+			while(current < initTime + length){
+				publish((int)((initTime + length - current) * progressMax / length));
+				//Arbitrary 15 ms sleep length
+				Thread.sleep(15);
+				current = System.currentTimeMillis();
+			}
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public void process(List<Integer> list){
+			int val = list.get(list.size() - 1);
+			progressBar.setValue(val);
+		}
+
+	}
+
 }

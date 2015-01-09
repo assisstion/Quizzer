@@ -18,6 +18,7 @@ import java.util.logging.Logger;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -44,6 +45,7 @@ public class MainFrame extends JFrame{
 	private JPanel panel_5;
 	private JCheckBox chckbxFixedQuestions;
 	private JPanel panel_6;
+	private JPanel panel_6_1;
 	private JButton btnReverseSentenceQuiz;
 	private JPanel panel_7;
 	private JButton btnSentenceQuiz;
@@ -52,6 +54,8 @@ public class MainFrame extends JFrame{
 
 	private List<Closeable> leakableResources = new CopyOnWriteArrayList<Closeable>();
 	private JCheckBox chckbxBalance;
+	private JComboBox comboBox;
+	private JLabel lblTime;
 
 	/**
 	 * Launch the application.
@@ -78,7 +82,7 @@ public class MainFrame extends JFrame{
 		setTitle("Vocab Quizzer");
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		addWindowListener(new ShutdownWindowListener());
-		setBounds(100, 100, 450, 300);
+		setBounds(100, 100, 450, 350);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
@@ -179,14 +183,32 @@ public class MainFrame extends JFrame{
 		panel_5.add(chckbxFixedQuestions);
 
 		chckbxLogOutput = new JCheckBox("Log Output");
+		chckbxLogOutput.setSelected(true);
 		panel_5.add(chckbxLogOutput);
 
 		chckbxBalance = new JCheckBox("Balance");
+		chckbxBalance.setSelected(true);
 		panel_5.add(chckbxBalance);
+
+		panel_6_1 = new JPanel();
+		panel_4.add(panel_6_1);
+
+		lblTime = new JLabel("Time:");
+		panel_6_1.add(lblTime);
+
+		comboBox = new JComboBox();
+		comboBox.addItem("Fast");
+		comboBox.addItem("Regular");
+		comboBox.addItem("Slow");
+		comboBox.addItem("None");
+		comboBox.setSelectedItem("Regular");
+		panel_6_1.add(comboBox);
 	}
 
 	protected void startQuiz(int i){
-		quizPanel = new QuizPanel(this, i, textField.getText(), chckbxFixedQuestions.isSelected(), chckbxBalance.isSelected());
+		quizPanel = new QuizPanel(this, i, textField.getText(),
+				chckbxFixedQuestions.isSelected(), chckbxBalance.isSelected(),
+				comboBox.getSelectedItem().toString());
 		contentPane.remove(panel_4);
 		contentPane.add(quizPanel);
 		new Thread(new QuizStarter()).start();
