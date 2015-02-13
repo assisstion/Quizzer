@@ -237,7 +237,7 @@ public class QuizPanel extends JPanel implements Runnable{
 				mainFrame.dispose();
 			}
 			else{
-				mainFrame.returnToMenu();
+				mainFrame.returnToMenu(this);
 			}
 		}
 	}

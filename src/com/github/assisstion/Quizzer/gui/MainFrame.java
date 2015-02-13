@@ -26,6 +26,8 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 
+import com.github.assisstion.Quizzer.custom.vocab.Quizzes;
+
 public class MainFrame extends JFrame{
 
 	private static final long serialVersionUID = -1322465178993759990L;
@@ -50,12 +52,15 @@ public class MainFrame extends JFrame{
 	private JPanel panel_7;
 	private JButton btnSentenceQuiz;
 	private QuizPanel quizPanel;
+	private FlashCardPanel fcpanel;
 	private JCheckBox chckbxLogOutput;
 
 	private List<Closeable> leakableResources = new CopyOnWriteArrayList<Closeable>();
 	private JCheckBox chckbxBalance;
 	private JComboBox comboBox;
 	private JLabel lblTime;
+	private JPanel panel_8;
+	private JButton btnFlashcards;
 
 	/**
 	 * Launch the application.
@@ -82,7 +87,7 @@ public class MainFrame extends JFrame{
 		setTitle("Vocab Quizzer");
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		addWindowListener(new ShutdownWindowListener());
-		setBounds(100, 100, 450, 350);
+		setBounds(100, 100, 450, 380);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
@@ -176,6 +181,22 @@ public class MainFrame extends JFrame{
 		});
 		panel_6.add(btnReverseSentenceQuiz);
 
+		panel_8 = new JPanel();
+		panel_4.add(panel_8);
+
+		btnFlashcards = new JButton("Flashcards");
+		btnFlashcards.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				fcpanel = new FlashCardPanel(MainFrame.this,Quizzes.getQuiz(1),
+						chckbxFixedQuestions.isSelected(),textField.getText());
+				contentPane.remove(panel_4);
+				contentPane.add(fcpanel);
+				//MainFrame.this.invalidate();
+			}
+		});
+		panel_8.add(btnFlashcards);
+
 		panel_5 = new JPanel();
 		panel_4.add(panel_5);
 
@@ -215,12 +236,12 @@ public class MainFrame extends JFrame{
 
 	}
 
-	public void returnToMenu(){
+	public void returnToMenu(final JPanel panel){
 		EventQueue.invokeLater(new Runnable(){
 
 			@Override
 			public void run(){
-				contentPane.remove(quizPanel);
+				contentPane.remove(panel);
 				contentPane.add(panel_4);
 				contentPane.validate();
 				contentPane.repaint();
