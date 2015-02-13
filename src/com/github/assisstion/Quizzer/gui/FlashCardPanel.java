@@ -2,6 +2,8 @@ package com.github.assisstion.Quizzer.gui;
 
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.HashSet;
@@ -15,7 +17,7 @@ import javax.swing.JPanel;
 import com.github.assisstion.Quizzer.system.Question;
 import com.github.assisstion.Quizzer.system.Quiz;
 
-public class FlashCardPanel extends JPanel implements MouseListener{
+public class FlashCardPanel extends JPanel implements MouseListener, KeyListener{
 
 	private static final long serialVersionUID = 5741923347508783398L;
 	protected HashSet<Integer> exclude = new HashSet<Integer>();
@@ -39,10 +41,13 @@ public class FlashCardPanel extends JPanel implements MouseListener{
 		this.excludeOn = excludeOn;
 		location = loc;
 		addMouseListener(this);
+		addKeyListener(this);
+		setFocusable(true);
 	}
 
 	@Override
 	public void paint(Graphics g){
+		requestFocusInWindow();
 		if(!init){
 			init = true;
 			quiz.load(location);
@@ -265,5 +270,27 @@ public class FlashCardPanel extends JPanel implements MouseListener{
 			s = s.substring(0, s.length() - 1);
 		}
 		return s;
+	}
+
+	@Override
+	public void keyTyped(KeyEvent e){
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void keyPressed(KeyEvent e){
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void keyReleased(KeyEvent e){
+		if(e.getKeyCode() == KeyEvent.VK_M){
+			frame.returnToMenu(this);
+		}
+		else if(e.getKeyCode() == KeyEvent.VK_Q){
+			System.exit(0);
+		}
 	}
 }

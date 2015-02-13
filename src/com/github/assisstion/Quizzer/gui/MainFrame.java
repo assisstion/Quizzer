@@ -192,7 +192,7 @@ public class MainFrame extends JFrame{
 						chckbxFixedQuestions.isSelected(),textField.getText());
 				contentPane.remove(panel_4);
 				contentPane.add(fcpanel);
-				//MainFrame.this.invalidate();
+				contentPane.validate();
 			}
 		});
 		panel_8.add(btnFlashcards);
